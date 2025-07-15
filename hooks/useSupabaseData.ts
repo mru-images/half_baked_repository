@@ -11,6 +11,7 @@ export function useSupabaseData(user: User | null) {
   const [loading, setLoading] = useState(true)
   const [songsLoaded, setSongsLoaded] = useState(false)
   const [playlistsLoaded, setPlaylistsLoaded] = useState(false)
+  const [dataInitialized, setDataInitialized] = useState(false)
   const [currentSongStartTime, setCurrentSongStartTime] = useState<Date | null>(null)
   const currentSongRef = useRef<string | null>(null)
 
@@ -422,17 +423,24 @@ export function useSupabaseData(user: User | null) {
 
   useEffect(() => {
     const loadData = async () => {
+      // Only load data if not already initialized or if user changes
+      if (dataInitialized && user) return
+      
       setSongsLoaded(false)
       setPlaylistsLoaded(false)
+      setLoading(true)
       await Promise.all([fetchSongs(), fetchPlaylists()])
+      setDataInitialized(true)
     }
 
     loadData()
-  }, [user])
+  }, [user?.id]) // Only depend on user ID, not the entire user object
 
   // Update loading state based on both songs and playlists
   useEffect(() => {
-    setLoading(!songsLoaded || !playlistsLoaded)
+    if (dataInitialized) {
+      setLoading(!songsLoaded || !playlistsLoaded)
+    }
   }, [songsLoaded, playlistsLoaded])
 
   return {

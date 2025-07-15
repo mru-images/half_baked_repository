@@ -398,15 +398,6 @@ const setCurrentTimeState = setCurrentTime;
   return (
     
       <div className={`min-h-screen ${themeClasses} relative overflow-hidden`}>
-        {/* Show loading overlay only when actually loading data */}
-        {loading && user && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-              <p className="text-white">Loading your music...</p>
-            </div>
-          </div>
-        )}
 
         {/* Main Content */}
         <div className={`transition-all duration-300 ${currentSong ? 'pb-36' : 'pb-20'}`}>
@@ -449,7 +440,7 @@ const setCurrentTimeState = setCurrentTime;
         )}
 
         {/* Music Player - Only show if currentSong exists */}
-        {currentSong && user && !loading && (
+        {currentSong && user && (
           <>
             {!isPlayerMaximized ? (
               <MinimizedPlayer
@@ -502,7 +493,7 @@ const setCurrentTimeState = setCurrentTime;
         )}
 
         {/* Modals */}
-        {user && !loading && (
+        {user && (
           <CreatePlaylistModal
             isOpen={showCreatePlaylistModal}
             onClose={() => setShowCreatePlaylistModal(false)}
@@ -510,7 +501,7 @@ const setCurrentTimeState = setCurrentTime;
           />
         )}
 
-        {user && !loading && (
+        {user && (
           <AddToPlaylistModal
             isOpen={showAddToPlaylistModal}
             onClose={() => {
