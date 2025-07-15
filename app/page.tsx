@@ -314,12 +314,23 @@ const handleNext = () => {
   };
 
   const renderContent = () => {
-    if (loading) {
+    if (loading && user) {
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
             <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Loading your music...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Show empty state if no user but not loading
+    if (!user && !loading) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Please sign in to access your music</p>
           </div>
         </div>
       );
@@ -387,13 +398,23 @@ const setCurrentTimeState = setCurrentTime;
   return (
     
       <div className={`min-h-screen ${themeClasses} relative overflow-hidden`}>
+        {/* Show loading overlay only when actually loading data */}
+        {loading && user && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <p className="text-white">Loading your music...</p>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
         <div className={`transition-all duration-300 ${currentSong ? 'pb-36' : 'pb-20'}`}>
           {renderContent()}
         </div>
 
         {/* Bottom Navigation */}
-        {currentPage === 'main' && (
+        {currentPage === 'main' && user && !loading && (
           <div className={`fixed bottom-0 left-0 right-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t z-30`}>
             <div className="flex items-center justify-around py-3">
               <button
@@ -428,7 +449,7 @@ const setCurrentTimeState = setCurrentTime;
         )}
 
         {/* Music Player - Only show if currentSong exists */}
-        {currentSong && (
+        {currentSong && user && !loading && (
           <>
             {!isPlayerMaximized ? (
               <MinimizedPlayer
@@ -481,7 +502,70 @@ const setCurrentTimeState = setCurrentTime;
         )}
 
         {/* Modals */}
-        <CreatePlaylistModal
+        {user && !loading && (
+          <CreatePlaylistModal
+            isOpen={showCreatePlaylistModal}
+            onClose={() => setShowCreatePlaylistModal(false)}
+            onCreatePlaylist={createPlaylist}
+          />
+        )}
+
+        {user && !loading && (
+          <AddToPlaylistModal
+            isOpen={showAddToPlaylistModal}
+            onClose={() => {
+              setShowAddToPlaylistModal(false);
+              setSelectedSongForPlaylist(null);
+            }}
+            song={selectedSongForPlaylist}
+            playlists={playlists}
+            onAddToPlaylist={addSongToPlaylist}
+            onCreatePlaylist={() => {
+              setShowAddToPlaylistModal(false);
+              setShowCreatePlaylistModal(true);
+            }}
+            imageUrls={imageUrls}
+            setImageUrls={setImageUrls}
+          />
+        )}
+
+        {currentSong && (
+          <audio
+            ref={audioRef}
+            src={audioUrl ?? undefined}
+            onEnded={handleNext}
+            onTimeUpdate={() => {
+            if (audioRef.current && !isSeeking && !isExternallySeeking) {
+              const current = audioRef.current.currentTime;
+              // Only update state if the difference is significant
+              if (Math.abs(currentTime - current) > 0.25) {
+                setCurrentTime(current);
+              }
+            }
+          }}
+
+
+            onLoadedMetadata={handleLoadedMetadata}
+            onVolumeChange={() => {
+              if (audioRef.current) {
+                setVolume(audioRef.current.volume);
+              }
+            }}
+            style={{ display: 'none' }}
+          />
+        )}
+      </div>
+  );
+}
+
+export default function MusicPlayerApp() {
+  return (
+    <AuthWrapper>
+      <MusicPlayerContent />
+    </AuthWrapper>
+  );
+}
+
           isOpen={showCreatePlaylistModal}
           onClose={() => setShowCreatePlaylistModal(false)}
           onCreatePlaylist={createPlaylist}
